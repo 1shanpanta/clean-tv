@@ -3,14 +3,16 @@
 // via the ignition flag, see lib/clock.js, not the constant WebKit-Version
 // string) does not need one and a build step adds nothing here.
 
-// Placeholder dock until real icons are read from each app's own appinfo.json
-// on the TV (see README: icons come from the device, never bundled).
+// Icons are our own local copies, not bundled from elsewhere: each one was
+// pulled directly off this TV from the real app's own appinfo.json icon path
+// (see README), so they are what LG's own Content Store already ships for
+// these apps, not hand-drawn or guessed.
 var DOCK_ENTRIES = window.CleanTV.buildDockConfig([
-  { id: 'youtube.leanback.v4', label: 'YouTube', icon: 'Y' },
-  { id: 'amazon', label: 'Prime Video', icon: 'P' },
-  { id: 'com.webos.app.browser', label: 'Web Browser', icon: 'B' },
-  { id: 'org.webosbrew.hbchannel', label: 'Homebrew Channel', icon: 'H' },
-  { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'L' },
+  { id: 'youtube.leanback.v4', label: 'YouTube', icon: 'assets/icons/youtube.png' },
+  { id: 'amazon', label: 'Prime Video', icon: 'assets/icons/prime.png' },
+  { id: 'com.webos.app.browser', label: 'Web Browser', icon: 'assets/icons/browser.png' },
+  { id: 'org.webosbrew.hbchannel', label: 'Homebrew Channel', icon: 'assets/icons/hbchannel.png' },
+  { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'assets/icons/livetv.png' },
 ]);
 
 function renderClock() {
@@ -18,17 +20,27 @@ function renderClock() {
   el.textContent = window.CleanTV.formatClock(new Date());
 }
 
-function renderDock(focusedIndex) {
+// Built once, on load. A CSS transition only animates a property change on
+// the SAME element across two paints; rebuilding the dock's innerHTML on
+// every focus move (the old approach) replaces each tile with a brand new
+// node every time, so there was nothing for a transition to animate between.
+var dockItems = [];
+
+function buildDock() {
   var dock = document.getElementById('dock');
   dock.innerHTML = '';
+  dockItems = [];
 
-  DOCK_ENTRIES.forEach(function (entry, index) {
+  DOCK_ENTRIES.forEach(function (entry) {
     var item = document.createElement('div');
-    item.className = 'dock-item' + (index === focusedIndex ? ' focused' : '');
+    item.className = 'dock-item';
 
     var glyph = document.createElement('div');
     glyph.className = 'glyph';
-    glyph.textContent = entry.icon;
+    var img = document.createElement('img');
+    img.src = entry.icon;
+    img.alt = entry.label;
+    glyph.appendChild(img);
 
     var label = document.createElement('div');
     label.className = 'label';
@@ -37,6 +49,13 @@ function renderDock(focusedIndex) {
     item.appendChild(glyph);
     item.appendChild(label);
     dock.appendChild(item);
+    dockItems.push(item);
+  });
+}
+
+function updateFocus(focusedIndex) {
+  dockItems.forEach(function (item, index) {
+    item.classList.toggle('focused', index === focusedIndex);
   });
 }
 
@@ -44,7 +63,7 @@ var focusedIndex = 0;
 
 function moveFocus(direction) {
   focusedIndex = window.CleanTV.nextFocusedIndex(focusedIndex, direction, DOCK_ENTRIES.length);
-  renderDock(focusedIndex);
+  updateFocus(focusedIndex);
 }
 
 // Launches a dock entry over Luna. PalmServiceBridge is webOS's legacy
@@ -120,4 +139,5 @@ function scheduleClockTick() {
 
 renderClock();
 scheduleClockTick();
-renderDock(focusedIndex);
+buildDock();
+updateFocus(focusedIndex);
