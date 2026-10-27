@@ -1,9 +1,11 @@
 # clean-tv
 
 A clean Home screen for a rooted LG webOS 4 TV: clock, photo background, a dock
-of apps, and a safe fallback to LG's stock Home if it fails to load.
+of apps, designed to fall back safely to LG's stock Home if it fails to load.
 
 <img src="app/assets/wallpaper.jpg" alt="v1 wallpaper" width="640">
+
+The wallpaper photo is the project owner's own, not stock or AI-generated.
 
 Built because no existing launcher supports webOS 4. [cleanyourtv-WebOS](https://github.com/lasharor/cleanyourtv-WebOS)
 does the same job on webOS 5+ (systemd required); this project borrows the
@@ -20,8 +22,7 @@ flowchart LR
         css[style.css]
         js[app.js]
         lib1[lib/clock.js]
-        lib2[lib/wallpaper.js]
-        lib3[lib/dock.js]
+        lib2[lib/dock.js]
     end
 
     subgraph service["service/ — the takeover daemon"]
@@ -36,12 +37,12 @@ flowchart LR
     li -- "points boot at" --> html
 ```
 
-The launcher (`app/`) is a normal installed web app, same kind as YouTube or
-Homebrew Channel. It never touches LG's Home at all, doesn't matter that this
-TV's Home is a compiled native binary, not HTML. Instead, a background
-service (`service/`) races LG's Home to the screen at every power-on and HOME
-key press, and once it wins once, tells the system to stop routing HOME to
-LG's side entirely.
+The launcher (`app/`) will be a normal installed web app, same kind as YouTube or
+Homebrew Channel. It will never touch LG's Home at all, doesn't matter that
+this TV's Home is a compiled native binary, not HTML. Instead, a background
+service (`service/`) is designed to race LG's Home to the screen at every
+power-on and HOME key press, and once it wins once, tell the system to stop
+routing HOME to LG's side entirely.
 
 ### The power-on race
 
@@ -67,30 +68,36 @@ sequenceDiagram
     end
 ```
 
-Nothing is ever taken from LG on a guess: the fail-safe gate only arms after
-our app has actually been confirmed on screen once.
+Nothing is meant to be taken from LG on a guess: the fail-safe gate is
+designed to arm only after our app has actually been confirmed on screen
+once.
 
 ## Status
 
 | Piece | State |
 |---|---|
-| UI logic (`app/lib/*.js`) | Written, tested (8 tests) |
-| Service logic (`service/lib/*.js`) | Written, tested (13 tests) |
+| UI logic (`app/lib/*.js`) | Written, tested (13 tests) |
+| Service logic (`service/lib/*.js`) | Written, tested (41 tests) |
 | Live HOME key scan code | Confirmed on this TV: `773` |
-| Live Luna APIs the service needs | Confirmed present on this TV |
+| `disableHome` config key, `lastinput` file, `getPowerState` | Confirmed present on this TV |
+| `getForegroundAppInfo`, `videooutput/getStatus`, `applicationManager/launch`, `setConfigs`, the timing constants | Not yet checked live |
 | The service's own entry point (`service.js`) | Not yet written |
 | Installed and tested on the TV | Not yet |
 
-Everything above the entry point has been checked against the real TV before
-being trusted: see [`docs/architecture.md`](docs/architecture.md) for exactly
-what was verified, live, and how.
+Several things were checked live before and during writing the service code
+(the HOME scan code from raw evdev, the `lastinput` plain file, two Luna
+calls, `disableHome` and `getPowerState`, plus device facts like the armv7l
+kernel, webOS 4.10, and Node v0.12.2); the rest wait on the entry point,
+since `service.js` is what would actually call them: see
+[`docs/architecture.md`](docs/architecture.md) for exactly what was
+verified, live, and how.
 
 ## Decisions (frozen)
 
 - **Scope for v1:** clock, photo background, static app dock, fallback to
   stock Home. No live TV, no voice, no themes, no remote-button escape hatch.
   Debloat is in scope as a follow-on pass, after v1's takeover is proven safe.
-- **Target:** webOS 4.0–4.10, tested against a rooted 43LM5700PTC
+- **Target:** webOS 4.0–4.10, developed against a rooted 43LM5700PTC
   (firmware 05.40.97).
 - **Default dock:** YouTube, Prime Video, Web Browser, Homebrew Channel.
   Real icons read from each app's own folder on the TV, never bundled.
@@ -102,7 +109,7 @@ what was verified, live, and how.
 npm test
 ```
 
-Runs every test in `tests/`: UI logic and service logic, 21 total. Opens no
+Runs every test in `tests/`: UI logic and service logic, 54 total. Opens no
 browser and touches no TV.
 
 ## Credit
