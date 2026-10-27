@@ -25,9 +25,38 @@ var TOP_ICONS = window.CleanTV.buildDockConfig([
   { id: 'com.palm.app.settings', label: 'Settings', icon: 'assets/icons-svg/settings.svg' },
 ]);
 
+// Corrects for this TV's own drifting system clock (see lib/time-offset.js):
+// 0 until the network fetch below resolves, so the clock still shows
+// *something* immediately, just uncorrected for the first few seconds.
+var clockOffsetMs = 0;
+
 function renderClock() {
   var el = document.getElementById('clock');
-  el.textContent = window.CleanTV.formatClock(new Date());
+  var corrected = window.CleanTV.applyOffset(new Date(), clockOffsetMs);
+  el.textContent = window.CleanTV.formatClock(corrected);
+}
+
+// Cloudflare's trace endpoint for an accurate timestamp: plain text, a `ts=`
+// line with a Unix epoch, CORS-open, and backed by Cloudflare's own edge
+// network rather than a smaller time-API service that could be down. XHR
+// rather than fetch(): this TV's Chromium ~53-era engine may predate a
+// reliable fetch() implementation, XHR has existed since far older browsers.
+function syncClockOffset() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', 'https://cloudflare.com/cdn-cgi/trace', true);
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState !== 4 || xhr.status !== 200) {
+      return;
+    }
+    var match = /ts=([0-9.]+)/.exec(xhr.responseText);
+    if (!match) {
+      return;
+    }
+    var serverMs = parseFloat(match[1]) * 1000;
+    clockOffsetMs = window.CleanTV.computeOffset(serverMs, Date.now());
+    renderClock();
+  };
+  xhr.send();
 }
 
 // Built once, on load. A CSS transition only animates a property change on
@@ -194,6 +223,10 @@ function scheduleClockTick() {
 
 renderClock();
 scheduleClockTick();
+syncClockOffset();
+// Re-sync every 30 minutes: a single correction at launch doesn't catch
+// drift that keeps accumulating on a TV left running for hours or days.
+setInterval(syncClockOffset, 30 * 60 * 1000);
 buildDock();
 buildTopIcons();
 updateFocus();
