@@ -1,0 +1,10 @@
+{
+  "name": "clean-tv",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clean Home screen for a rooted LG webOS 4 TV",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test tests/"
+  }
+}
