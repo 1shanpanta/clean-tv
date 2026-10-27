@@ -23,6 +23,7 @@ flowchart LR
         js[app.js]
         lib1[lib/clock.js]
         lib2[lib/dock.js]
+        lib3[lib/time-offset.js]
     end
 
     subgraph service["service/ — the takeover daemon"]
@@ -76,13 +77,13 @@ once.
 
 | Piece | State |
 |---|---|
-| UI logic (`app/lib/*.js`) | Written, tested (13 tests) |
+| UI logic (`app/lib/*.js`) | Written, tested (17 tests) |
 | Service logic (`service/lib/*.js`) | Written, tested (41 tests) |
+| UI itself (`app.js`, `style.css`) | Installed and launched on the real TV; dock (5 tiles, looping), top-icons row, and the live-time correction all confirmed working on-device |
 | Live HOME key scan code | Confirmed on this TV: `773` |
 | `disableHome` config key, `lastinput` file, `getPowerState` | Confirmed present on this TV |
 | `getForegroundAppInfo`, `videooutput/getStatus`, `applicationManager/launch`, `setConfigs`, the timing constants | Not yet checked live |
-| The service's own entry point (`service.js`) | Not yet written |
-| Installed and tested on the TV | Not yet |
+| The service's own entry point (`service.js`) | Not yet written, HOME still opens stock LG Home until it exists |
 
 Several things were checked live before and during writing the service code
 (the HOME scan code from raw evdev, the `lastinput` plain file, two Luna
@@ -99,8 +100,13 @@ verified, live, and how.
   Debloat is in scope as a follow-on pass, after v1's takeover is proven safe.
 - **Target:** webOS 4.0–4.10, developed against a rooted 43LM5700PTC
   (firmware 05.40.97).
-- **Default dock:** YouTube, Prime Video, Web Browser, Homebrew Channel.
-  Real icons read from each app's own folder on the TV, never bundled.
+- **Default dock:** YouTube, Prime Video, Web Browser, Homebrew, Live TV, a
+  looping row (past the last tile wraps to the first). Icons are flat white
+  glyphs via a CSS mask, not this TV's own colored app icons: see Credit.
+- **Top-icons row:** Photo & Video, LG Content Store, Settings
+  (`com.palm.app.settings`, confirmed live, `com.webos.app.settings` does
+  not exist on this TV), a separate focus zone reached with Up/Down from
+  the dock.
 - **License:** MIT.
 
 ## Develop
@@ -109,7 +115,7 @@ verified, live, and how.
 npm test
 ```
 
-Runs every test in `tests/`: UI logic and service logic, 54 total. Opens no
+Runs every test in `tests/`: UI logic and service logic, 58 total. Opens no
 browser and touches no TV.
 
 ## Credit
@@ -127,4 +133,15 @@ The visual design, clock top-left, photo background, bottom dock, and the
 for Samsung The Frame (Tizen), a different OS entirely. The glass effect
 there turned out to be plain gradients and an inset highlight, no
 `backdrop-filter`, which happens to be exactly what this TV's decade-old
-WebKit engine can actually render.
+WebKit engine can actually render. The real blur behind the dock is a
+genuine duplicate-and-blur of the wallpaper (the `filter` property, not
+`backdrop-filter`), works in a desktop browser but this TV's engine ignores
+it silently, degrading to the plain gradient with no error.
+
+**Icons** are flat white glyphs rendered via a CSS mask, not this TV's own
+colored app icons (those came back inconsistent, different brand colors
+each, and YouTube's only on-device asset is a wordmark banner, never a
+square mark). `youtube.svg` and `primevideo.svg` are CleanFrame's own
+bundled icon pack (same repo, MIT). `globe.svg`, `tv.svg`, `beer.svg`,
+`image.svg`, `grid.svg`, and `settings.svg` are from
+[Lucide](https://lucide.dev) (ISC), pinned to v0.460.0.
