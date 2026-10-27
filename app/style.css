@@ -115,8 +115,8 @@ html, body {
 }
 
 .dock-item .glyph {
-  width: 64px;
-  height: 64px;
+  width: 84px;
+  height: 84px;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.12);
   display: flex;
@@ -131,8 +131,8 @@ html, body {
    mask-image uses the SVG purely as a stencil, its own fill or stroke color
    never shows through. */
 .dock-item .mark {
-  width: 46px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   background-color: #f5f6f8;
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
