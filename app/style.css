@@ -114,25 +114,27 @@ html, body {
   transform: scale(1.06);
 }
 
-.dock-item .glyph {
-  width: 84px;
-  height: 84px;
+.glyph {
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14px;
   overflow: hidden;
+}
+
+.dock-item .glyph {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 14px;
 }
 
 /* The mask technique: background-color is the only source of the icon's
    visible color (white here, matching CleanFrame's reference look), and
    mask-image uses the SVG purely as a stencil, its own fill or stroke color
-   never shows through. */
-.dock-item .mark {
-  width: 64px;
-  height: 64px;
+   never shows through. Shared by the dock and the top-icons row; only the
+   size differs (set per container below). */
+.mark {
   background-color: #f5f6f8;
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
@@ -142,6 +144,11 @@ html, body {
   mask-position: center;
 }
 
+.dock-item .mark {
+  width: 64px;
+  height: 64px;
+}
+
 .dock-item .label {
   font-size: 36px;
   line-height: 44px;
@@ -149,4 +156,43 @@ html, body {
   letter-spacing: -0.6px;
   color: #f5f6f8;
   white-space: nowrap;
+}
+
+/* Top-right row (reference: photo/wallpaper, all-apps, settings), same glass
+   and mask technique as the dock, just smaller and circular, matching the
+   reference screenshot's layout instead of the dock's rectangular tiles. */
+.top-icons {
+  position: absolute;
+  top: 48px;
+  right: 56px;
+  display: flex;
+}
+
+.top-icon {
+  border-radius: 50%;
+  transition: transform 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    background 180ms cubic-bezier(0.2, 0.7, 0.2, 1),
+    box-shadow 180ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.top-icon:not(:last-child) {
+  margin-right: 12px;
+}
+
+.top-icon.focused {
+  background: linear-gradient(170deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.16) 58%, rgba(255, 255, 255, 0.22));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transform: scale(1.1);
+}
+
+.top-icon .glyph {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(20, 20, 24, 0.35);
+}
+
+.top-icon .mark {
+  width: 22px;
+  height: 22px;
 }

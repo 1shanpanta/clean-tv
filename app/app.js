@@ -17,25 +17,32 @@ var DOCK_ENTRIES = window.CleanTV.buildDockConfig([
   { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'assets/icons-svg/tv.svg' },
 ]);
 
+// Three app ids, all confirmed live on this TV via getAppInfo before wiring
+// (com.webos.app.settings does not exist here; com.palm.app.settings does).
+var TOP_ICONS = window.CleanTV.buildDockConfig([
+  { id: 'com.webos.app.photovideo', label: 'Photo & Video', icon: 'assets/icons-svg/image.svg' },
+  { id: 'com.webos.app.discovery', label: 'LG Content Store', icon: 'assets/icons-svg/grid.svg' },
+  { id: 'com.palm.app.settings', label: 'Settings', icon: 'assets/icons-svg/settings.svg' },
+]);
+
 function renderClock() {
   var el = document.getElementById('clock');
   el.textContent = window.CleanTV.formatClock(new Date());
 }
 
 // Built once, on load. A CSS transition only animates a property change on
-// the SAME element across two paints; rebuilding the dock's innerHTML on
+// the SAME element across two paints; rebuilding a container's innerHTML on
 // every focus move (the old approach) replaces each tile with a brand new
 // node every time, so there was nothing for a transition to animate between.
-var dockItems = [];
+// Shared by both the dock and the top-icons row, same tile shape either way.
+function buildRow(containerId, entries, itemClassName) {
+  var container = document.getElementById(containerId);
+  container.innerHTML = '';
+  var items = [];
 
-function buildDock() {
-  var dock = document.getElementById('dock');
-  dock.innerHTML = '';
-  dockItems = [];
-
-  DOCK_ENTRIES.forEach(function (entry) {
+  entries.forEach(function (entry) {
     var item = document.createElement('div');
-    item.className = 'dock-item';
+    item.className = itemClassName;
 
     // A flat white glyph via a CSS mask, not an <img>: the mask only reads
     // the source SVG's shape (alpha), never its own fill/stroke color, so
@@ -49,28 +56,65 @@ function buildDock() {
     mark.style.maskImage = 'url(' + entry.icon + ')';
     glyph.appendChild(mark);
 
-    var label = document.createElement('div');
-    label.className = 'label';
-    label.textContent = entry.label;
-
     item.appendChild(glyph);
-    item.appendChild(label);
-    dock.appendChild(item);
-    dockItems.push(item);
+
+    if (itemClassName === 'dock-item') {
+      var label = document.createElement('div');
+      label.className = 'label';
+      label.textContent = entry.label;
+      item.appendChild(label);
+    }
+
+    container.appendChild(item);
+    items.push(item);
   });
+
+  return items;
 }
 
-function updateFocus(focusedIndex) {
-  dockItems.forEach(function (item, index) {
-    item.classList.toggle('focused', index === focusedIndex);
-  });
+var dockItems = [];
+var topItems = [];
+
+function buildDock() {
+  dockItems = buildRow('dock', DOCK_ENTRIES, 'dock-item');
 }
 
+function buildTopIcons() {
+  topItems = buildRow('top-icons', TOP_ICONS, 'top-icon');
+}
+
+// Two focus zones, not one: the dock (left/right) and the top-icons row
+// (left/right too), switched between with up/down. Only the active zone
+// ever shows a focus highlight; leaving a zone clears it there.
+var focusZone = 'dock';
 var focusedIndex = 0;
+var topFocusedIndex = 0;
+
+function updateFocus() {
+  dockItems.forEach(function (item, index) {
+    item.classList.toggle('focused', focusZone === 'dock' && index === focusedIndex);
+  });
+  topItems.forEach(function (item, index) {
+    item.classList.toggle('focused', focusZone === 'top' && index === topFocusedIndex);
+  });
+}
 
 function moveFocus(direction) {
-  focusedIndex = window.CleanTV.nextFocusedIndex(focusedIndex, direction, DOCK_ENTRIES.length);
-  updateFocus(focusedIndex);
+  if (focusZone === 'dock') {
+    focusedIndex = window.CleanTV.nextFocusedIndex(focusedIndex, direction, DOCK_ENTRIES.length);
+  } else {
+    topFocusedIndex = window.CleanTV.nextFocusedIndex(topFocusedIndex, direction, TOP_ICONS.length);
+  }
+  updateFocus();
+}
+
+function switchZone(zone) {
+  focusZone = zone;
+  updateFocus();
+}
+
+function currentEntry() {
+  return focusZone === 'dock' ? DOCK_ENTRIES[focusedIndex] : TOP_ICONS[topFocusedIndex];
 }
 
 // Launches a dock entry over Luna. PalmServiceBridge is webOS's legacy
@@ -126,10 +170,14 @@ document.addEventListener('keydown', function (e) {
     moveFocus(-1);
   } else if (e.key === 'ArrowRight' || e.keyCode === 39) {
     moveFocus(1);
+  } else if (e.key === 'ArrowUp' || e.keyCode === 38) {
+    switchZone('top');
+  } else if (e.key === 'ArrowDown' || e.keyCode === 40) {
+    switchZone('dock');
   } else if (e.key === 'Enter' || e.keyCode === 13) {
     // The remote's OK key is assumed to report the same keycode as Enter,
     // not yet confirmed live on this TV.
-    launchEntry(DOCK_ENTRIES[focusedIndex]);
+    launchEntry(currentEntry());
   }
 });
 
@@ -147,4 +195,5 @@ function scheduleClockTick() {
 renderClock();
 scheduleClockTick();
 buildDock();
-updateFocus(focusedIndex);
+buildTopIcons();
+updateFocus();
