@@ -52,16 +52,16 @@ test('buildLaunchPayload throws when the entry has no id', () => {
   assert.throws(() => buildLaunchPayload({}, {}));
 });
 
-// Breaks a version with no clamp: moving left from the first tile must stay
-// on the first tile, not go negative or wrap to the last one.
-test('nextFocusedIndex clamps at the first tile', () => {
-  assert.equal(nextFocusedIndex(0, -1, 4), 0);
+// Breaks a version with no wrap: moving left from the first tile must land
+// on the last tile, not go negative or stay stuck at 0.
+test('nextFocusedIndex wraps from the first tile to the last', () => {
+  assert.equal(nextFocusedIndex(0, -1, 4), 3);
 });
 
-// Breaks a version with no clamp: moving right from the last tile must stay
-// on the last tile, not run past the end of the dock.
-test('nextFocusedIndex clamps at the last tile', () => {
-  assert.equal(nextFocusedIndex(3, 1, 4), 3);
+// Breaks a version with no wrap: moving right from the last tile must land
+// back on the first tile, not run past the end of the dock.
+test('nextFocusedIndex wraps from the last tile to the first', () => {
+  assert.equal(nextFocusedIndex(3, 1, 4), 0);
 });
 
 test('nextFocusedIndex moves one step within range', () => {

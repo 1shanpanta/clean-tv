@@ -126,10 +126,20 @@ html, body {
   overflow: hidden;
 }
 
-.dock-item .glyph img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+/* The mask technique: background-color is the only source of the icon's
+   visible color (white here, matching CleanFrame's reference look), and
+   mask-image uses the SVG purely as a stencil, its own fill or stroke color
+   never shows through. */
+.dock-item .mark {
+  width: 36px;
+  height: 36px;
+  background-color: #f5f6f8;
+  -webkit-mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
 }
 
 .dock-item .label {

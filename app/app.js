@@ -3,16 +3,18 @@
 // via the ignition flag, see lib/clock.js, not the constant WebKit-Version
 // string) does not need one and a build step adds nothing here.
 
-// Icons are our own local copies, not bundled from elsewhere: each one was
-// pulled directly off this TV from the real app's own appinfo.json icon path
-// (see README), so they are what LG's own Content Store already ships for
-// these apps, not hand-drawn or guessed.
+// Flat white glyphs via a CSS mask (see style.css .glyph img), not this TV's
+// own colored app icons: those came back inconsistent (different brand
+// colors each, and YouTube's only asset on this TV is a wordmark banner,
+// never a square mark). youtube.svg/primevideo.svg are CleanFrame's own
+// (github.com/nthnclrk/CleanFrame, MIT); globe/tv/beer are Lucide
+// (lucide.dev, ISC, pinned v0.460.0).
 var DOCK_ENTRIES = window.CleanTV.buildDockConfig([
-  { id: 'youtube.leanback.v4', label: 'YouTube', icon: 'assets/icons/youtube.png' },
-  { id: 'amazon', label: 'Prime Video', icon: 'assets/icons/prime.png' },
-  { id: 'com.webos.app.browser', label: 'Web Browser', icon: 'assets/icons/browser.png' },
-  { id: 'org.webosbrew.hbchannel', label: 'Homebrew Channel', icon: 'assets/icons/hbchannel.png' },
-  { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'assets/icons/livetv.png' },
+  { id: 'youtube.leanback.v4', label: 'YouTube', icon: 'assets/icons-svg/youtube.svg' },
+  { id: 'amazon', label: 'Prime Video', icon: 'assets/icons-svg/primevideo.svg' },
+  { id: 'com.webos.app.browser', label: 'Web Browser', icon: 'assets/icons-svg/globe.svg' },
+  { id: 'org.webosbrew.hbchannel', label: 'Homebrew', icon: 'assets/icons-svg/beer.svg' },
+  { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'assets/icons-svg/tv.svg' },
 ]);
 
 function renderClock() {
@@ -35,12 +37,17 @@ function buildDock() {
     var item = document.createElement('div');
     item.className = 'dock-item';
 
+    // A flat white glyph via a CSS mask, not an <img>: the mask only reads
+    // the source SVG's shape (alpha), never its own fill/stroke color, so
+    // CleanFrame's solid-fill marks and Lucide's stroke-only outlines both
+    // come out the same uniform white regardless of how each was drawn.
     var glyph = document.createElement('div');
     glyph.className = 'glyph';
-    var img = document.createElement('img');
-    img.src = entry.icon;
-    img.alt = entry.label;
-    glyph.appendChild(img);
+    var mark = document.createElement('div');
+    mark.className = 'mark';
+    mark.style.webkitMaskImage = 'url(' + entry.icon + ')';
+    mark.style.maskImage = 'url(' + entry.icon + ')';
+    glyph.appendChild(mark);
 
     var label = document.createElement('div');
     label.className = 'label';

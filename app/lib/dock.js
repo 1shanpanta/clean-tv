@@ -30,15 +30,12 @@ function buildLaunchPayload(entry, params) {
   return { id: entry.id, params: params || {} };
 }
 
-// Moves the focused dock index by one in `direction` (-1 or 1), clamped to
-// the valid range: the focus stops at the first/last tile rather than
-// wrapping around to the other end.
+// Moves the focused dock index by one in `direction` (-1 or 1), wrapping
+// around: past the last tile goes to the first, past the first goes to the
+// last, a real carousel rather than stopping at the ends.
 function nextFocusedIndex(currentIndex, direction, length) {
   if (length <= 0) return 0;
-  var next = currentIndex + direction;
-  if (next < 0) return 0;
-  if (next > length - 1) return length - 1;
-  return next;
+  return ((currentIndex + direction) % length + length) % length;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
