@@ -131,8 +131,8 @@ html, body {
    mask-image uses the SVG purely as a stencil, its own fill or stroke color
    never shows through. */
 .dock-item .mark {
-  width: 36px;
-  height: 36px;
+  width: 46px;
+  height: 46px;
   background-color: #f5f6f8;
   -webkit-mask-size: contain;
   -webkit-mask-repeat: no-repeat;
