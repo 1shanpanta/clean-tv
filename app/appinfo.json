@@ -1,0 +1,11 @@
+{
+  "id": "com.cleantv.launcher",
+  "title": "clean-tv",
+  "type": "web",
+  "main": "index.html",
+  "version": "0.1.0",
+  "vendor": "clean-tv",
+  "icon": "assets/icon80.png",
+  "largeIcon": "assets/icon130.png",
+  "resolution": "1920x1080"
+}

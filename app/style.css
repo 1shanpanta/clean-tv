@@ -38,14 +38,21 @@ html, body {
    flag, see app/lib/clock.js, not the constant WebKit-Version string)
    predates backdrop-filter by years, but plain gradients and box-shadow
    work on anything. */
+/* Tile and label sizing below is ported directly from CleanFrame's own
+   production CSS (github.com/nthnclrk/CleanFrame, app/style.css, MIT),
+   not re-derived: it's authored at 1920x1080, same resolution this TV's
+   appinfo.json declares, so the numbers apply as-is. A desktop-scale 128px
+   tile with a 15px label reads as genuinely tiny from 10 feet away; this
+   TV's own glyph marks stay our own, CleanFrame's brand-logo artwork is
+   not reused. */
 .dock {
   position: absolute;
-  bottom: 56px;
+  bottom: 90px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
-  padding: 18px 20px;
-  border-radius: 24px;
+  border-radius: 32px;
+  height: 232px;
   background: linear-gradient(170deg, rgba(40, 44, 52, 0.55), rgba(24, 26, 32, 0.6) 60%, rgba(20, 22, 28, 0.65));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
@@ -54,9 +61,13 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 128px;
+  justify-content: center;
+  width: 288px;
+  height: 200px;
+  margin: 16px 0;
   padding: 14px 10px;
-  border-radius: 16px;
+  border-radius: 32px;
+  box-sizing: border-box;
 }
 
 .dock-item:not(:last-child) {
@@ -69,20 +80,23 @@ html, body {
 }
 
 .dock-item .glyph {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
   background: rgba(255, 255, 255, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 30px;
   color: #f5f6f8;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .dock-item .label {
-  font-size: 15px;
+  font-size: 36px;
+  line-height: 44px;
+  font-weight: 500;
+  letter-spacing: -0.6px;
   color: #f5f6f8;
   white-space: nowrap;
 }

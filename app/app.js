@@ -10,6 +10,7 @@ var DOCK_ENTRIES = window.CleanTV.buildDockConfig([
   { id: 'amazon', label: 'Prime Video', icon: 'P' },
   { id: 'com.webos.app.browser', label: 'Web Browser', icon: 'B' },
   { id: 'org.webosbrew.hbchannel', label: 'Homebrew Channel', icon: 'H' },
+  { id: 'com.webos.app.livetv', label: 'Live TV', icon: 'L' },
 ]);
 
 function renderClock() {
