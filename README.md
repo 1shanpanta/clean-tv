@@ -1,7 +1,7 @@
 # clean-tv
 
 A clean Home screen for a rooted LG webOS 4 TV: clock, photo background, a dock
-of apps, designed to fall back safely to LG's stock Home if it fails to load.
+of apps. It falls back to LG's stock Home if it fails to load.
 
 <img src="app/assets/wallpaper.jpg" alt="v1 wallpaper" width="640">
 
@@ -17,7 +17,7 @@ native, not web-based, stock Home.
 
 ```mermaid
 flowchart LR
-    subgraph app["app/ — the launcher UI"]
+    subgraph app["app/: the launcher UI"]
         html[index.html]
         css[style.css]
         js[app.js]
@@ -26,7 +26,7 @@ flowchart LR
         lib3[lib/time-offset.js]
     end
 
-    subgraph service["service/ — the takeover daemon"]
+    subgraph service["service/: the takeover daemon"]
         svc[service.js]
         fg[lib/foreground.js]
         li[lib/last-input.js]
@@ -38,12 +38,11 @@ flowchart LR
     li -- "points boot at" --> html
 ```
 
-The launcher (`app/`) will be a normal installed web app, same kind as YouTube or
-Homebrew Channel. It will never touch LG's Home at all, doesn't matter that
-this TV's Home is a compiled native binary, not HTML. Instead, a background
-service (`service/`) is designed to race LG's Home to the screen at every
-power-on and HOME key press, and once it wins once, tell the system to stop
-routing HOME to LG's side entirely.
+The launcher (`app/`) is a normal installed web app, same kind as YouTube or
+Homebrew Channel. LG's Home on this TV is a native binary; the launcher never
+touches it. A background service (`service/`) races LG's Home to the screen at
+every power-on and HOME key press. Once it wins once, it tells the system to
+stop routing HOME to LG's side.
 
 ### The power-on race
 
@@ -60,18 +59,14 @@ sequenceDiagram
     end
     Svc->>TV: getForegroundAppInfo
     alt We won
-        Svc->>Svc: armed — disableHome=true
+        Svc->>Svc: armed: stop routing HOME to LG
         Svc->>TV: HOME now only reaches us
     else Home won this round
         Svc->>Svc: retry (up to 4x, 1.5s apart)
     else All retries failed
-        Svc->>Svc: fail-safe — give HOME and last-input back to LG
+        Svc->>Svc: fail-safe: give HOME and last-input back to LG
     end
 ```
-
-Nothing is meant to be taken from LG on a guess: the fail-safe gate is
-designed to arm only after our app has actually been confirmed on screen
-once.
 
 ## Status
 
@@ -80,33 +75,22 @@ once.
 | UI logic (`app/lib/*.js`) | Written, tested (17 tests) |
 | Service logic (`service/lib/*.js`) | Written, tested (41 tests) |
 | UI itself (`app.js`, `style.css`) | Installed and launched on the real TV; dock (5 tiles, looping), top-icons row, and the live-time correction all confirmed working on-device |
-| Live HOME key scan code | Confirmed on this TV: `773` |
-| `disableHome` config key, `lastinput` file, `getPowerState` | Confirmed present on this TV |
-| `getForegroundAppInfo`, `videooutput/getStatus`, `applicationManager/launch`, `setConfigs`, the timing constants | Not yet checked live |
-| The service's own entry point (`service.js`) | Not yet written, HOME still opens stock LG Home until it exists |
+| HOME key scan code | Confirmed on this TV |
+| Takeover service | Helpers written and tested; the entry point (`service.js`) is not written, so HOME still opens stock LG Home |
 
-Several things were checked live before and during writing the service code
-(the HOME scan code from raw evdev, the `lastinput` plain file, two Luna
-calls, `disableHome` and `getPowerState`, plus device facts like the armv7l
-kernel, webOS 4.10, and Node v0.12.2); the rest wait on the entry point,
-since `service.js` is what would actually call them: see
-[`docs/architecture.md`](docs/architecture.md) for exactly what was
-verified, live, and how.
+Details: [`docs/architecture.md`](docs/architecture.md).
 
 ## Decisions (frozen)
 
 - **Scope for v1:** clock, photo background, static app dock, fallback to
   stock Home. No live TV, no voice, no themes, no remote-button escape hatch.
   Debloat is in scope as a follow-on pass, after v1's takeover is proven safe.
-- **Target:** webOS 4.0–4.10, developed against a rooted 43LM5700PTC
-  (firmware 05.40.97).
+- **Target:** webOS 4.0 to 4.10, developed against one rooted LG TV on 4.10.
 - **Default dock:** YouTube, Prime Video, Web Browser, Homebrew, Live TV, a
   looping row (past the last tile wraps to the first). Icons are flat white
   glyphs via a CSS mask, not this TV's own colored app icons: see Credit.
-- **Top-icons row:** Photo & Video, LG Content Store, Settings
-  (`com.palm.app.settings`, confirmed live, `com.webos.app.settings` does
-  not exist on this TV), a separate focus zone reached with Up/Down from
-  the dock.
+- **Top-icons row:** Photo & Video, LG Content Store, Settings, a separate
+  focus zone reached with Up/Down from the dock.
 - **License:** MIT.
 
 ## Develop
@@ -115,34 +99,28 @@ verified, live, and how.
 npm test
 ```
 
-Runs every test in `tests/`: UI logic and service logic, 58 total. Opens no
-browser and touches no TV.
+Runs every test in `tests/`: UI logic and service logic, 58 total. No browser,
+no TV needed.
 
 ## Credit
 
-The takeover mechanism (racing HOME/power-on, `disableHome`, the last-input
-rewrite, the fail-safe arm/fail state machine) is adapted from
+The takeover mechanism (racing HOME/power-on, the disable-Home flag, the
+last-input rewrite, the fail-safe arm/fail state machine) is adapted from
 [hbertsch/lgtv-webos-root-launcher](https://github.com/hbertsch/lgtv-webos-root-launcher)
 (MIT), built there for a 2021 webOS 6 TV. No code from that repository is
 copied; every file here is written fresh for webOS 4.10's older Node
-(v0.12.2, confirmed live) and its Upstart-based (not systemd) boot process.
+(v0.12.2) and its Upstart-based (not systemd) boot process.
 
 The visual design, clock top-left, photo background, bottom dock, and the
 "glass" look on the dock itself, is adapted from
 [nthnclrk/CleanFrame](https://github.com/nthnclrk/CleanFrame) (MIT), built
 for Samsung The Frame (Tizen), a different OS entirely. The glass effect
-there turned out to be plain gradients and an inset highlight, no
-`backdrop-filter`, which happens to be exactly what this TV's decade-old
-WebKit engine can actually render. The real blur behind the dock is a genuine duplicate-and-blur of the
-wallpaper (the `filter` property, not `backdrop-filter`). Confirmed working
-in a desktop browser; confirmed NOT visibly showing in a screenshot from the
-real TV. The exact reason isn't confirmed, no devtools access to check
-computed styles on that engine, candidates are GPU-accelerated filters
-being disabled on this embedded build, `background-attachment: fixed`
-silently degrading to `scroll` (would misalign it, not disable it), or the
-dock's own opaque gradient tint just masking a subtle blur. Degrades
-gracefully either way: worst case is the plain gradient, same look as
-before this was added.
+there is plain gradients and an inset highlight, no `backdrop-filter`, which
+is what this TV's decade-old WebKit engine can render. The blur behind the
+dock is a duplicated, blurred copy of the wallpaper (the `filter` property,
+not `backdrop-filter`). It shows in a desktop browser and not in a screenshot
+from the TV; the cause is unknown, there are no devtools on that engine. The
+fallback is the plain gradient.
 
 **Icons** are flat white glyphs rendered via a CSS mask, not this TV's own
 colored app icons (those came back inconsistent, different brand colors
