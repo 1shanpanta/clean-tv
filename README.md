@@ -133,10 +133,16 @@ The visual design, clock top-left, photo background, bottom dock, and the
 for Samsung The Frame (Tizen), a different OS entirely. The glass effect
 there turned out to be plain gradients and an inset highlight, no
 `backdrop-filter`, which happens to be exactly what this TV's decade-old
-WebKit engine can actually render. The real blur behind the dock is a
-genuine duplicate-and-blur of the wallpaper (the `filter` property, not
-`backdrop-filter`), works in a desktop browser but this TV's engine ignores
-it silently, degrading to the plain gradient with no error.
+WebKit engine can actually render. The real blur behind the dock is a genuine duplicate-and-blur of the
+wallpaper (the `filter` property, not `backdrop-filter`). Confirmed working
+in a desktop browser; confirmed NOT visibly showing in a screenshot from the
+real TV. The exact reason isn't confirmed, no devtools access to check
+computed styles on that engine, candidates are GPU-accelerated filters
+being disabled on this embedded build, `background-attachment: fixed`
+silently degrading to `scroll` (would misalign it, not disable it), or the
+dock's own opaque gradient tint just masking a subtle blur. Degrades
+gracefully either way: worst case is the plain gradient, same look as
+before this was added.
 
 **Icons** are flat white glyphs rendered via a CSS mask, not this TV's own
 colored app icons (those came back inconsistent, different brand colors
